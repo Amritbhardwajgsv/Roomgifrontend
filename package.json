@@ -1,7 +1,6 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,8 +9,10 @@
   "description": "",
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
+    "lucide-react": "^0.563.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-icons": "^5.5.0",
     "react-router": "^7.13.0",
     "redux": "^5.0.1",
     "tailwindcss": "^4.1.18"

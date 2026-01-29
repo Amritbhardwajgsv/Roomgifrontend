@@ -1,12 +1,16 @@
 import { Link } from "react-router";
 
 export default function Login() {
+
+
+
+  
+// add the code for storing tokens here 
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl text-center font-semibold my-7">Login</h1>
       <form className="flex  flex-col gap-3">
         <input
-          type="email"
           placeholder="Email"
           className="border p-3 rounded-lg"
           required
