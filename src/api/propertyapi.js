@@ -27,3 +27,6 @@ export const updatedetails = (body) => {
         body: JSON.stringify(body)
     });
 };
+export const getpropertybybrokername = () => {
+  return apifetch("/api/property/getbybrokername");
+};

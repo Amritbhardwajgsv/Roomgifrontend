@@ -1,14 +1,29 @@
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import {
   Home,
   PlusSquare,
   Building2,
   User,
-  LogOut,
-  Trash2
+  LogOut
 } from "lucide-react";
+import apifetch from "../../api/apifetch";
 
 export default function Sidebar() {
+
+  const navigate = useNavigate(); 
+
+  const handleLogout = async () => {
+    try {
+      await apifetch("/api/user/logout", {
+        method: "POST"
+      });
+
+      navigate("/", { replace: true });
+    } catch (err) {
+      console.log(err.message);
+    }
+  };
+
   return (
     <div className="h-full w-full p-4 relative">
 
@@ -70,13 +85,10 @@ export default function Sidebar() {
       </nav>
 
       {/* logout */}
-      <div className="absolute bottom-6 left-0 w-64 px-4">
+      <div className="absolute bottom-6 left-0 w-full px-4">
         <button
           className="flex items-center gap-3 w-full px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-lg"
-          onClick={() => {
-            localStorage.clear();
-            window.location.href = "/login";
-          }}
+          onClick={handleLogout}
         >
           <LogOut size={20} />
           Logout
