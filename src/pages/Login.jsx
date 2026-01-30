@@ -32,7 +32,7 @@ export default function Login() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // ✅ IMPORTANT
+          credentials: "include", 
           body: JSON.stringify(formData),
         }
       );
@@ -45,7 +45,7 @@ export default function Login() {
       }
 
 
-      // ✅ Save token to localStorage
+      
       if (data.token) {
         localStorage.setItem("token", data.token);
       }

@@ -1,5 +1,21 @@
 @import "tailwindcss";
-
 .input {
-  @apply border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500;
+  @apply w-full px-4 py-3 rounded-xl border border-gray-300 
+  text-gray-700 text-sm 
+  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+  transition duration-200 bg-white;
+}
+
+.input::placeholder {
+  @apply text-gray-400;
+}
+
+/* Card animation */
+.shadow-lg {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* Smooth hover */
+button {
+  transition: all 0.25s ease;
 }
