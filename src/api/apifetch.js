@@ -1,4 +1,5 @@
 const base_url = process.env.API_URL;
+console.log("BASE URL:", base_url);
 
 async function apifetch(endpoint, options = {}) {
   const response = await fetch(base_url + endpoint, {
@@ -8,7 +9,8 @@ async function apifetch(endpoint, options = {}) {
       ...options.headers,
     },
     ...options,
-  });
+  }
+);
 
   const data = await response.json();
 

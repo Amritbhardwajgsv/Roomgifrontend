@@ -15,12 +15,18 @@ export const deletebyid = (house_id) => {
 };
 
 // post request 
-export const adddetails=(body)=>{
-    return apifetch("/api/property",{
-        method:"POST",
-        body:JSON.stringify(body),
-    });
+import apifetch from "./apifetch";
+
+export const adddetails = async (payload) => {
+  // Removed .then(res => res.json()) because apifetch already does it!
+  return await fetch("http://localhost:3000/api/property", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
 };
+
+
+
 export const updatedetails = (body) => {
     return apifetch("/api/property/update", {
         method: "PATCH",
