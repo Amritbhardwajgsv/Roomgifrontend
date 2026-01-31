@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-/* Fix leaflet marker issue */
+/* ================= LEAFLET FIX ================= */
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -15,24 +15,41 @@ L.Icon.Default.mergeOptions({
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+/* ================= MAP CLICK ================= */
 function LocationPicker({ setFormData }) {
   useMapEvents({
-    click(e) {
+    async click(e) {
       const { lat, lng } = e.latlng;
-      setFormData(prev => ({
-        ...prev,
+
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      );
+      const data = await res.json();
+      const a = data.address || {};
+
+      setFormData(p => ({
+        ...p,
         latitude: lat.toFixed(6),
         longitude: lng.toFixed(6),
+        city: a.city || a.town || a.village || "",
+        district: a.county || a.state_district || "",
+        state: a.state || ""
       }));
-    },
+    }
   });
   return null;
 }
 
+/* ================= COMPONENT ================= */
 export default function AddProperty() {
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
+
   const [formData, setFormData] = useState({
-    city: "",
+    Apartment_name: "",
     state: "",
+    district: "",
+    city: "",
     latitude: "",
     longitude: "",
     price_inr: "",
@@ -40,219 +57,156 @@ export default function AddProperty() {
     bedrooms: "",
     bathrooms: "",
     property_type: "Apartment",
-    nearest_hospital: "",
-    hospital_distance_km: "",
-    nearest_railway_station: "",
-    railway_distance_km: "",
-    nearest_airport: "",
-    airport_distance_km: "",
     year_built: "",
-    parking: "None",
-    furnishing: "Unfurnished",
-    water_supply: "Municipal",
-    power_backup: false,
-    internet: "None",
-    photo_url: "",
-    Apartment_name: "",
+    parking: "",
+    furnishing: "",
+    water_supply: "",
+    internet: "",
+    power_backup: false
   });
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
+    setFormData(p => ({
+      ...p,
+      [name]: type === "checkbox" ? checked : value
     }));
   };
 
-  const detectLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation not supported");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setFormData(prev => ({
-          ...prev,
-          latitude: pos.coords.latitude.toFixed(6),
-          longitude: pos.coords.longitude.toFixed(6),
-        }));
-      },
-      () => alert("Location permission denied")
-    );
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
 
-    try {
-      const payload = {
-        ...formData,
-        Owner_name: localStorage.getItem("username") || "rajesh kumar",
-        brokername: localStorage.getItem("brokername") || "default-broker",
-      };
+    const fd = new FormData();
+    Object.entries(formData).forEach(([k, v]) => fd.append(k, v));
 
-      await adddetails(payload);
-      alert("Property added successfully!");
-    } catch (err) {
-      alert(err.message);
-    }
+    fd.append("location[type]", "Point");
+    fd.append("location[coordinates][0]", formData.longitude);
+    fd.append("location[coordinates][1]", formData.latitude);
+
+    fd.append("photo", image);
+    fd.append("Owner_name", localStorage.getItem("username"));
+    fd.append("brokername", localStorage.getItem("brokername"));
+    fd.append("BrokerId", localStorage.getItem("uniqueid"));
+
+    await adddetails(fd);
+    alert("Property added successfully");
   };
 
+  const Input = ({ label, name, type = "text", required }) => (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <input
+        className="input"
+        type={type}
+        name={name}
+        value={formData[name]}
+        onChange={handleChange}
+        required={required}
+      />
+    </div>
+  );
 
   return (
-  <div className="min-h-screen bg-gray-100 py-10 px-4">
+    <div className="min-h-screen bg-gray-100 py-10 px-4">
+      <div className="max-w-7xl mx-auto bg-white p-8 rounded-xl shadow">
+        <h1 className="text-3xl font-bold mb-6">Add Property</h1>
 
-    <div className="max-w-7xl mx-auto">
+        {/* ================= FORM + MAP ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-      {/* HEADER */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-800">
-          Add Property
-        </h1>
-        <p className="text-gray-500 mt-1">
-          Fill the details below to list a new property
-        </p>
-      </div>
+          {/* LEFT */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Input label="Apartment Name" name="Apartment_name" />
+            <Input label="Price (INR)" name="price_inr" type="number" required />
+            <Input label="Size (sqft)" name="size_sqft" type="number" required />
+            <Input label="Bedrooms" name="bedrooms" type="number" required />
+            <Input label="Bathrooms" name="bathrooms" type="number" required />
 
-      {/* MAIN GRID */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Property Type *</label>
+              <select
+                className="input"
+                name="property_type"
+                value={formData.property_type}
+                onChange={handleChange}
+              >
+                <option>Apartment</option>
+                <option>Flat</option>
+                <option>Villa</option>
+                <option>Independent House</option>
+                <option>PG</option>
+                <option>Hostel</option>
+              </select>
+            </div>
 
-        {/* LEFT FORM */}
-        <div className="xl:col-span-2 bg-white rounded-2xl shadow-lg p-8">
+            <Input label="Year Built" name="year_built" type="number" />
+            <Input label="Parking" name="parking" />
+            <Input label="Furnishing" name="furnishing" />
+            <Input label="Water Supply" name="water_supply" />
+            <Input label="Internet" name="internet" />
 
-          <h2 className="text-xl font-semibold text-gray-700 mb-6">
-            Property Information
-          </h2>
+            <Input label="State" name="state" />
+            <Input label="District" name="district" />
+            <Input label="City" name="city" />
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
-          >
-
-            <input name="city" placeholder="City" className="input"
-              value={formData.city} onChange={handleChange} required />
-
-            <input name="state" placeholder="State" className="input"
-              value={formData.state} onChange={handleChange} required />
-
-            <input name="price_inr" type="number" placeholder="Price (INR)"
-              className="input" value={formData.price_inr}
-              onChange={handleChange} required />
-
-            <input name="size_sqft" type="number" placeholder="Size (sqft)"
-              className="input" value={formData.size_sqft}
-              onChange={handleChange} required />
-
-            <input name="bedrooms" type="number" placeholder="Bedrooms"
-              className="input" value={formData.bedrooms}
-              onChange={handleChange} required />
-
-            <input name="bathrooms" type="number" placeholder="Bathrooms"
-              className="input" value={formData.bathrooms}
-              onChange={handleChange} required />
-
-            <select
-              name="property_type"
-              className="input"
-              value={formData.property_type}
-              onChange={handleChange}
-            >
-              <option>Apartment</option>
-              <option>Flat</option>
-              <option>Villa</option>
-              <option>Independent House</option>
-              <option>PG</option>
-              <option>Hostel</option>
-            </select>
-
-            <select
-              name="furnishing"
-              className="input"
-              value={formData.furnishing}
-              onChange={handleChange}
-            >
-              <option>Unfurnished</option>
-              <option>Semi-Furnished</option>
-              <option>Fully-Furnished</option>
-            </select>
-
-            <input
-              name="photo_url"
-              placeholder="Property Image URL"
-              className="input col-span-2"
-              value={formData.photo_url}
-              onChange={handleChange}
-            />
-
-            <button
-              type="submit"
-              className="col-span-2 mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 text-white py-3 rounded-xl text-lg font-semibold shadow-md"
-            >
-              Publish Property
-            </button>
-
-          </form>
-        </div>
-
-        {/* RIGHT MAP PANEL */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col">
-
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-700">
-              Location Picker
-            </h2>
-
-            <button
-              type="button"
-              onClick={detectLocation}
-              className="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
-            >
-              Auto Detect
-            </button>
+            <label className="flex items-center gap-2 col-span-2">
+              <input type="checkbox" name="power_backup" onChange={handleChange} />
+              Power Backup
+            </label>
           </div>
 
-          <div className="rounded-xl overflow-hidden border mb-4">
+          {/* RIGHT */}
+          <div>
+            <label className="text-sm font-medium mb-2 block">
+              Select Property Location (Click on Map)
+            </label>
+
             <MapContainer
               center={[20.5937, 78.9629]}
               zoom={5}
-              className="h-[360px] w-full"
+              className="h-[520px] rounded-xl"
             >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <LocationPicker setFormData={setFormData} />
-
               {formData.latitude && (
-                <Marker
-                  position={[
-                    formData.latitude,
-                    formData.longitude
-                  ]}
-                />
+                <Marker position={[formData.latitude, formData.longitude]} />
               )}
             </MapContainer>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-auto">
-            <input
-              value={formData.latitude}
-              readOnly
-              placeholder="Latitude"
-              className="input bg-gray-100"
-            />
-            <input
-              value={formData.longitude}
-              readOnly
-              placeholder="Longitude"
-              className="input bg-gray-100"
-            />
+            {formData.latitude && (
+              <p className="text-xs text-gray-500 mt-2">
+                Lat: {formData.latitude} | Lng: {formData.longitude}
+              </p>
+            )}
           </div>
-
         </div>
+
+        {/* ================= FULL WIDTH IMAGE UPLOAD ================= */}
+        <form onSubmit={handleSubmit} className="mt-8">
+          {!preview ? (
+            <label className="border-2 border-dashed h-52 flex items-center justify-center rounded-xl cursor-pointer w-full">
+              Upload Property Image *
+              <input
+                hidden
+                type="file"
+                accept="image/*"
+                onChange={e => {
+                  setImage(e.target.files[0]);
+                  setPreview(URL.createObjectURL(e.target.files[0]));
+                }}
+              />
+            </label>
+          ) : (
+            <img src={preview} className="h-52 w-full object-cover rounded-xl" />
+          )}
+
+          <button className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold">
+            Publish Property
+          </button>
+        </form>
       </div>
     </div>
-  </div>
-);
+  );
 }
