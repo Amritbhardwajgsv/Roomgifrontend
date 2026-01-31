@@ -19,7 +19,7 @@ import apifetch from "./apifetch";
 
 export const adddetails = async (payload) => {
   // Removed .then(res => res.json()) because apifetch already does it!
-  return await fetch("http://localhost:3000/api/property", {
+  return await fetch("https://roomgi-backend-0yz1.onrender.com/api/property", {
     method: "POST",
     body: JSON.stringify(payload)
   });
