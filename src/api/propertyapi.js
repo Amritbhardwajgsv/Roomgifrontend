@@ -15,16 +15,29 @@ export const deletebyid = (house_id) => {
 };
 
 // post request 
-import apifetch from "./apifetch";
+// src/api/propertyapi.js
+
+const BASE_URL = "https://roomgi-backend-0yz1.onrender.com";
+
 export const adddetails = async (payload) => {
-  return await fetch("https://roomgi-backend-0yz1.onrender.com/api/property/", {
+  const token = localStorage.getItem("token"); // JWT token
+
+  const res = await fetch(`${BASE_URL}/api/property/`, {
     method: "POST",
-    credentials: "include",           
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
     },
     body: JSON.stringify(payload)
   });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw data;
+  }
+
+  return data;
 };
 
 

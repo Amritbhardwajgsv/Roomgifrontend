@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { adddetails } from "../../api/propertyapi";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
@@ -15,90 +15,16 @@ L.Icon.Default.mergeOptions({
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-/* ================= MAP CLICK ==============npx p=== */
-function LocationPicker({ setFormData }) {
-  useMapEvents({
-    async click(e) {
-      const { lat, lng } = e.latlng;
-
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-      );
-      const data = await res.json();
-      const a = data.address || {};
-
-      setFormData(p => ({
-        ...p,
-        latitude: lat,
-        longitude: lng,
-        city: a.city || a.town || a.village || "",
-        district: a.county || a.state_district || "",
-        state: a.state || ""
-      }));
-    }
-  });
-  return null;
-}
-
-/* ================= COMPONENT ================= */
-export default function AddProperty() {
-  const [formData, setFormData] = useState({
-    Apartment_name: "",
-    state: "",
-    district: "",
-    city: "",
-    latitude: null,
-    longitude: null,
-    price_inr: "",
-    size_sqft: "",
-    bedrooms: "",
-    bathrooms: "",
-    property_type: "Apartment",
-    year_built: "",
-    parking: "",
-    furnishing: "",
-    water_supply: "",
-    internet: "",
-    power_backup: false
-  });
-
-  const handleChange = e => {
-    const { name, value, type, checked } = e.target;
-    setFormData(p => ({
-      ...p,
-      [name]: type === "checkbox" ? checked : value
-    }));
-  };
-
-  const handleSubmit = async e => {
-    e.preventDefault();
-
-    if (!formData.latitude || !formData.longitude) {
-      alert("Please select property location on map");
-      return;
-    }
-
-    const payload = {
-      ...formData,
-      Owner_name: localStorage.getItem("username"),
-      brokername: localStorage.getItem("brokername"),
-      BrokerId: localStorage.getItem("uniqueid"),
-      location: {
-        type: "Point",
-        coordinates: [formData.longitude, formData.latitude]
-      }
-    };
-
-    try {
-      await adddetails(payload); // JSON body
-      alert("Property added successfully");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to add property");
-    }
-  };
-
-  const Input = ({ label, name, type = "text", required }) => (
+/* ================= MEMO INPUT ================= */
+const Input = memo(function Input({
+  label,
+  name,
+  type = "text",
+  required,
+  value,
+  onChange
+}) {
+  return (
     <div className="flex flex-col gap-1">
       <label className="text-sm font-medium">
         {label} {required && <span className="text-red-500">*</span>}
@@ -107,28 +33,102 @@ export default function AddProperty() {
         className="input"
         type={type}
         name={name}
-        value={formData[name]}
-        onChange={handleChange}
+        value={value}
+        onChange={onChange}
         required={required}
       />
     </div>
   );
+});
+
+/* ================= MAP CLICK ================= */
+function LocationPicker({ setFormData }) {
+  useMapEvents({
+    async click(e) {
+      const { lat, lng } = e.latlng;
+
+      setFormData(p => ({
+        ...p,
+        latitude: lat,
+        longitude: lng
+      }));
+    }
+  });
+
+  return null;
+}
+
+/* ================= MAIN COMPONENT ================= */
+export default function AddProperty() {
+  const [formData, setFormData] = useState({
+    Apartment_name: "",
+    price_inr: "",
+    size_sqft: "",
+    bedrooms: "",
+    bathrooms: "",
+    property_type: "Apartment",
+    year_built: "",
+    parking: "",
+    furnishing: "",
+    power_backup: false,
+    latitude: null,
+    longitude: null
+  });
+
+  /* 🔒 STABLE HANDLER (CRITICAL FIX) */
+  const handleChange = useCallback(e => {
+    const { name, value, type, checked } = e.target;
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  }, []);
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+
+    if (formData.latitude === null) {
+      alert("Please select location on map");
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      price_inr: Number(formData.price_inr),
+      size_sqft: Number(formData.size_sqft),
+      bedrooms: Number(formData.bedrooms),
+      bathrooms: Number(formData.bathrooms),
+      location: {
+        type: "Point",
+        coordinates: [formData.longitude, formData.latitude]
+      }
+    };
+
+    try {
+      await adddetails(payload);
+      alert("Property added successfully ✅");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add property ❌");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
-      <div className="max-w-7xl mx-auto bg-white p-8 rounded-xl shadow">
+      <div className="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow">
         <h1 className="text-3xl font-bold mb-6">Add Property</h1>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-            {/* LEFT FORM */}
+            {/* FORM */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Input label="Apartment Name" name="Apartment_name" />
-              <Input label="Price (INR)" name="price_inr" type="number" required />
-              <Input label="Size (sqft)" name="size_sqft" type="number" required />
-              <Input label="Bedrooms" name="bedrooms" type="number" required />
-              <Input label="Bathrooms" name="bathrooms" type="number" required />
+              <Input label="Apartment Name" name="Apartment_name" value={formData.Apartment_name} onChange={handleChange} />
+              <Input label="Price (INR)" name="price_inr" type="number" required value={formData.price_inr} onChange={handleChange} />
+              <Input label="Size (sqft)" name="size_sqft" type="number" required value={formData.size_sqft} onChange={handleChange} />
+              <Input label="Bedrooms" name="bedrooms" type="number" required value={formData.bedrooms} onChange={handleChange} />
+              <Input label="Bathrooms" name="bathrooms" type="number" required value={formData.bathrooms} onChange={handleChange} />
 
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium">Property Type *</label>
@@ -142,23 +142,20 @@ export default function AddProperty() {
                   <option>Flat</option>
                   <option>Villa</option>
                   <option>Independent House</option>
-                  <option>PG</option>
-                  <option>Hostel</option>
                 </select>
               </div>
 
-              <Input label="Year Built" name="year_built" type="number" />
-              <Input label="Parking" name="parking" />
-              <Input label="Furnishing" name="furnishing" />
-              <Input label="Water Supply" name="water_supply" />
-              <Input label="Internet" name="internet" />
-
-              <Input label="State" name="state" required />
-              <Input label="District" name="district" />
-              <Input label="City" name="city" required />
+              <Input label="Year Built" name="year_built" type="number" value={formData.year_built} onChange={handleChange} />
+              <Input label="Parking" name="parking" value={formData.parking} onChange={handleChange} />
+              <Input label="Furnishing" name="furnishing" value={formData.furnishing} onChange={handleChange} />
 
               <label className="flex items-center gap-2 col-span-2">
-                <input type="checkbox" name="power_backup" onChange={handleChange} />
+                <input
+                  type="checkbox"
+                  name="power_backup"
+                  checked={formData.power_backup}
+                  onChange={handleChange}
+                />
                 Power Backup
               </label>
             </div>
