@@ -1,171 +1,157 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
 import apifetch from "../../api/apifetch";
 
-export default function Myprofiles() {
-  const navigate = useNavigate();
-
+export default function MyProfile() {
   const [user, setUser] = useState(null);
-  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     emailId: "",
-    age: ""
+    age: "",
+    location: ""
   });
 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
-
+  /* ================= LOAD PROFILE ================= */
   useEffect(() => {
     const loadProfile = async () => {
-      try {
-        const data = await apifetch("/api/user/me");
-        setUser(data.user);
-        setForm({
-          emailId: data.user.emailId || "",
-          age: data.user.age || ""
-        });
-      } catch {
-        navigate("/login");
-      }
+      const data = await apifetch("/api/user/me");
+
+      setUser(data.user);
+
+      setForm({
+        emailId: data.user.emailId ?? "",
+        age: data.user.age ?? "",
+        location: data.user.location ?? ""
+      });
     };
 
     loadProfile();
-  }, [navigate]);
+  }, []);
 
+  /* ================= HANDLE CHANGE ================= */
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.id]: e.target.value
-    });
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value ?? ""
+    }));
   };
 
-  const handleUpdate = async () => {
+  /* ================= SAVE PROFILE ================= */
+  const handleSave = async () => {
     setLoading(true);
-    setError("");
-    setSuccess("");
 
-    try {
-      const data = await apifetch("/api/user/patch", {
+    await apifetch(
+      "https://roomgi-backend-0yz1.onrender.com/api/user/patch",
+      {
         method: "PATCH",
-        body: JSON.stringify(form)
-      });
+        body: JSON.stringify({
+          emailId: form.emailId ?? "",
+          age: form.age ?? "",
+          location: form.location ?? ""
+        })
+      }
+    );
 
-      setUser(data.user);
-      setSuccess("Profile updated successfully");
-      setTimeout(() => setOpen(false), 1000);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    setEditing(false);
+    setLoading(false);
   };
+
+  if (!user) return null;
 
   return (
-    <>
-      {/* CLICK PROFILE */}
-      <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-3"
-      >
-        <img
-          src="https://i.pravatar.cc/40"
-          className="w-9 h-9 rounded-full border"
-        />
-        <span className="font-medium">
-          {user?.username}
-        </span>
-      </button>
+    <div className="flex justify-center items-start min-h-screen pt-16 bg-[#d7e1ec]">
+      <div className="bg-white w-full max-w-lg rounded-2xl shadow-lg p-8">
 
-      {/* MODAL */}
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        {/* ================= AVATAR ================= */}
+        <div className="flex flex-col items-center mb-8">
+          <img
+            src="/assets/profile.png" // <-- add your asset here
+            alt="profile"
+            className="w-28 h-28 rounded-full border-4 border-blue-500"
+          />
+          <h2 className="mt-4 text-xl font-bold">
+            {user.username ?? ""}
+          </h2>
+          <p className="text-sm text-gray-500">
+            Broker ID: {user.uniqueid ?? ""}
+          </p>
+        </div>
 
-          <div className="bg-white w-full max-w-md rounded-xl p-6 shadow-xl relative animate-fade">
+        {/* ================= FIELDS ================= */}
+        <div className="space-y-4">
+          {/* EMAIL */}
+          <div>
+            <label className="text-xs text-gray-500 uppercase">
+              Email
+            </label>
+            <input
+              name="emailId"
+              value={form.emailId ?? ""}
+              disabled={!editing}
+              onChange={handleChange}
+              className={`w-full mt-1 p-3 rounded-lg border 
+                ${editing ? "bg-white" : "bg-gray-100"}
+                focus:outline-none`}
+            />
+          </div>
 
-            {/* CLOSE */}
-            <button
-              onClick={() => setOpen(false)}
-              className="absolute top-3 right-4 text-gray-500 text-xl"
-            >
-              ×
-            </button>
+          {/* AGE */}
+          <div>
+            <label className="text-xs text-gray-500 uppercase">
+              Age
+            </label>
+            <input
+              name="age"
+              type="number"
+              value={form.age ?? ""}
+              disabled={!editing}
+              onChange={handleChange}
+              className={`w-full mt-1 p-3 rounded-lg border 
+                ${editing ? "bg-white" : "bg-gray-100"}
+                focus:outline-none`}
+            />
+          </div>
 
-            <h2 className="text-2xl font-bold mb-6">
-              My Profile
-            </h2>
-
-            {/* INFO */}
-            <div className="mb-6 grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500">Username</p>
-                <p className="font-semibold">{user.username}</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">Broker ID</p>
-                <p className="font-semibold">{user.uniqueid}</p>
-              </div>
-            </div>
-
-            {/* FORM */}
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm">Email</label>
-                <input
-                  id="emailId"
-                  value={form.emailId}
-                  onChange={handleChange}
-                  type="email"
-                  className="w-full mt-1 p-2 border rounded focus:outline-none focus:ring focus:ring-blue-200"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm">Age</label>
-                <input
-                  id="age"
-                  value={form.age}
-                  onChange={handleChange}
-                  type="number"
-                  className="w-full mt-1 p-2 border rounded focus:outline-none focus:ring focus:ring-blue-200"
-                />
-              </div>
-            </div>
-
-            {/* BUTTONS */}
-            <div className="flex justify-end gap-4 mt-6">
-              <button
-                onClick={() => setOpen(false)}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleUpdate}
-                disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60"
-              >
-                {loading ? "Saving..." : "Save"}
-              </button>
-            </div>
-
-            {success && (
-              <p className="text-green-600 mt-3 text-sm">
-                {success}
-              </p>
-            )}
-
-            {error && (
-              <p className="text-red-600 mt-3 text-sm">
-                {error}
-              </p>
-            )}
+          {/* LOCATION */}
+          <div>
+            <label className="text-xs text-gray-500 uppercase">
+              Location
+            </label>
+            <input
+              name="location"
+              value={form.location ?? ""}
+              disabled={!editing}
+              onChange={handleChange}
+              className={`w-full mt-1 p-3 rounded-lg border 
+                ${editing ? "bg-white" : "bg-gray-100"}
+                focus:outline-none`}
+            />
           </div>
         </div>
-      )}
-    </>
+
+        {/* ================= ACTION ================= */}
+        <div className="flex justify-end mt-6">
+          {editing ? (
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-60"
+            >
+              {loading ? "Saving..." : "Save"}
+            </button>
+          ) : (
+            <button
+              onClick={() => setEditing(true)}
+              className="px-6 py-2 border rounded-lg"
+            >
+              Edit Profile
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

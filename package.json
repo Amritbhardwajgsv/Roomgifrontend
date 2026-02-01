@@ -2,9 +2,8 @@
   "name": "frontend",
   "version": "1.0.0",
   "scripts": {
-  
-    "dev":"parcel index.html",
-    "build":"parcel index.html"
+    "dev": "parcel index.html",
+    "build": "parcel index.html"
   },
   "author": "",
   "license": "ISC",

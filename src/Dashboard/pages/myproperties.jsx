@@ -29,6 +29,9 @@ export default function MyProperties() {
     internet: "",
   });
 
+  const [expandedHouseId, setExpandedHouseId] = useState(null);
+  const [deleteHouseId, setDeleteHouseId] = useState(null);
+
   /* ================= EFFECTS ================= */
   useEffect(() => {
     loadProperties();
@@ -98,18 +101,22 @@ export default function MyProperties() {
     }
   };
 
-  const deletehouse = async (id) => {
-    if (!confirm("Delete this property?")) return;
-    await deletebyid(id);
-    setProperties((prev) => prev.filter((p) => p.house_id !== id));
+  /* ================= DELETE ================= */
+  const confirmDelete = async () => {
+    await deletebyid(deleteHouseId);
+    setProperties((prev) =>
+      prev.filter((p) => p.house_id !== deleteHouseId)
+    );
+    setDeleteHouseId(null);
   };
 
+  /* ================= UPDATE ================= */
   const handleUpdate = async () => {
     const updated = await updatedetails(editProperty);
     setProperties((prev) =>
       prev.map((p) =>
-        p.house_id === updated.data.house_id ? updated.data : p,
-      ),
+        p.house_id === updated.data.house_id ? updated.data : p
+      )
     );
     setEditProperty(null);
   };
@@ -129,8 +136,7 @@ export default function MyProperties() {
         </div>
 
         <select
-          className="px-4 py-2 text-sm rounded-md border border-slate-300
-          bg-white focus:ring-1 focus:ring-slate-400"
+          className="px-4 py-2 text-sm rounded-md border"
           value={sortType}
           onChange={(e) => setSortType(e.target.value)}
         >
@@ -143,8 +149,8 @@ export default function MyProperties() {
         </select>
       </div>
 
-      {/* ================= FILTERS (STYLE 1) ================= */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
+      {/* FILTERS */}
+      <div className="bg-white border rounded-lg p-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5">
           {[
             {
@@ -179,64 +185,27 @@ export default function MyProperties() {
               label: "Internet",
               options: ["Fiber", "Broadband", "None"],
             },
-          ].map((field) => (
-            <div key={field.key} className="relative">
-              <select
-                className="peer w-full appearance-none
-                px-3 pt-5 pb-2 text-sm text-slate-800
-                bg-white border border-slate-300 rounded-lg
-                focus:border-slate-900 outline-none transition"
-                value={filters[field.key]}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    [field.key]: e.target.value,
-                  })
-                }
-              >
-                <option value=""></option>
-                {field.options.map((op) => (
-                  <option key={op}>{op}</option>
-                ))}
-              </select>
-
-              <label
-                className="absolute left-3 top-2 text-xs text-slate-500
-                peer-placeholder-shown:top-3.5
-                peer-placeholder-shown:text-sm
-                peer-focus:top-2
-                peer-focus:text-xs
-                transition-all pointer-events-none"
-              >
-                {field.label}
-              </label>
-            </div>
+          ].map((f) => (
+            <select
+              key={f.key}
+              className="px-3 py-2 border rounded-md text-sm"
+              value={filters[f.key]}
+              onChange={(e) =>
+                setFilters({ ...filters, [f.key]: e.target.value })
+              }
+            >
+              <option value="">{f.label}</option>
+              {f.options.map((op) => (
+                <option key={op}>{op}</option>
+              ))}
+            </select>
           ))}
-        </div>
-
-        <div className="flex justify-end mt-5">
-          <button
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            onClick={() => {
-              setFilters({
-                property_type: "",
-                parking: "",
-                furnishing: "",
-                water_supply: "",
-                internet: "",
-              });
-              setSortType("default");
-              loadProperties();
-            }}
-          >
-            Reset filters
-          </button>
         </div>
       </div>
 
-      {/* ================= TABLE ================= */}
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <div className="grid grid-cols-6 px-5 py-3 text-xs font-medium text-slate-500 bg-slate-50">
+      {/* TABLE */}
+      <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="grid grid-cols-6 px-5 py-3 text-xs font-medium bg-slate-50">
           <span className="col-span-2">Property</span>
           <span>Price</span>
           <span>Size</span>
@@ -244,91 +213,136 @@ export default function MyProperties() {
           <span className="text-right">Actions</span>
         </div>
 
-        {loading && (
-          <p className="px-5 py-6 text-sm text-slate-500">Loading...</p>
-        )}
-
         {properties.map((p) => (
-          <div
-            key={p.house_id}
-            className="grid grid-cols-6 px-5 py-4 border-t border-slate-100
-            hover:bg-slate-50 transition"
-          >
-            <div className="col-span-2 flex items-center gap-4">
-              <img
-                src={p.photo_url || "https://via.placeholder.com/80"}
-                className="h-12 w-16 rounded-md object-cover border"
-              />
-              <div>
-                <p className="text-sm font-medium text-slate-800">
+          <div key={p.house_id}>
+            <div
+              onClick={() =>
+                setExpandedHouseId(
+                  expandedHouseId === p.house_id ? null : p.house_id
+                )
+              }
+              className="grid grid-cols-6 px-5 py-4 border-t hover:bg-slate-50 cursor-pointer"
+            >
+              <div className="col-span-2">
+                <p className="text-sm font-medium">
                   {p.city}, {p.state}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {p.property_type || "Property"}
+                  {p.property_type}
                 </p>
+              </div>
+
+              <p>₹{p.price_inr}</p>
+              <p>{p.size_sqft} sqft</p>
+
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  p.status === "sold"
+                    ? "bg-red-100 text-red-600"
+                    : "bg-green-100 text-green-600"
+                }`}
+              >
+                {p.status === "sold" ? "Sold" : "Available"}
+              </span>
+
+              <div
+                className="flex justify-end gap-3"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="text-sm text-slate-600"
+                  onClick={() => setEditProperty({ ...p })}
+                >
+                  Edit
+                </button>
+                <button
+                  className="text-sm text-red-500"
+                  onClick={() => setDeleteHouseId(p.house_id)}
+                >
+                  Delete
+                </button>
               </div>
             </div>
 
-            <p className="text-sm font-medium text-slate-800">₹{p.price_inr}</p>
-
-            <p className="text-sm text-slate-600">{p.size_sqft} sqft</p>
-
-            <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 w-fit">
-              Active
-            </span>
-
-            <div className="flex justify-end gap-3">
-              <button
-                className="text-sm text-slate-600 hover:text-slate-900"
-                onClick={() => setEditProperty({ ...p })}
-              >
-                Edit
-              </button>
-              <button
-                className="text-sm text-slate-400 hover:text-red-600"
-                onClick={() => deletehouse(p.house_id)}
-              >
-                Delete
-              </button>
-            </div>
+            {expandedHouseId === p.house_id && (
+              <div className="bg-slate-50 px-6 py-4 border-t grid grid-cols-3 gap-4 text-sm">
+                <div><b>House ID:</b> {p.house_id}</div>
+                <div><b>Bedrooms:</b> {p.bedrooms}</div>
+                <div><b>Bathrooms:</b> {p.bathrooms}</div>
+                <div><b>Price:</b> ₹{p.price_inr}</div>
+                <div><b>Size:</b> {p.size_sqft} sqft</div>
+                <div><b>Status:</b> {p.status}</div>
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      {/* ================= MODAL ================= */}
+      {/* EDIT MODAL */}
       {editProperty && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md border">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-lg
+                max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-semibold mb-4">Edit Property</h2>
 
-            {["city", "state", "price_inr"].map((field) => (
-              <input
-                key={field}
-                type={field === "price_inr" ? "number" : "text"}
-                className="w-full mb-3 px-3 py-2 text-sm border rounded-md
-                focus:ring-1 focus:ring-slate-400"
-                value={editProperty[field]}
-                onChange={(e) =>
-                  setEditProperty({
-                    ...editProperty,
-                    [field]: e.target.value,
-                  })
-                }
-              />
-            ))}
+            <label className="block text-sm font-medium">House ID</label>
+            <input value={editProperty.house_id} disabled className="w-full mb-3 p-2 border rounded bg-gray-100" />
 
-            <div className="flex justify-end gap-3 mt-4">
-              <button
-                className="px-4 py-2 text-sm rounded-md bg-slate-100"
-                onClick={() => setEditProperty(null)}
-              >
+            <label className="block text-sm font-medium">City</label>
+            <input className="w-full mb-3 p-2 border rounded" value={editProperty.city ?? ""}
+              onChange={(e) => setEditProperty({ ...editProperty, city: e.target.value })} />
+
+            <label className="block text-sm font-medium">State</label>
+            <input className="w-full mb-3 p-2 border rounded" value={editProperty.state?? ""}
+              onChange={(e) => setEditProperty({ ...editProperty, state: e.target.value })} />
+
+            <label className="block text-sm font-medium">Price</label>
+            <input type="number" className="w-full mb-3 p-2 border rounded" value={editProperty.price_inr ?? ""}
+              onChange={(e) => setEditProperty({ ...editProperty, price_inr: e.target.value })} />
+
+            <label className="block text-sm font-medium">Size (sqft)</label>
+            <input type="number" className="w-full mb-3 p-2 border rounded" value={editProperty.size_sqft ?? ""}
+              onChange={(e) => setEditProperty({ ...editProperty, size_sqft: e.target.value })} />
+
+            <label className="block text-sm font-medium">Bedrooms</label>
+            <input type="number" className="w-full mb-3 p-2 border rounded" value={editProperty.bedrooms ?? "" }
+              onChange={(e) => setEditProperty({ ...editProperty, bedrooms: e.target.value })} />
+
+            <label className="block text-sm font-medium">Bathrooms</label>
+            <input type="number" className="w-full mb-3 p-2 border rounded" value={editProperty.bathrooms ?? ""}
+              onChange={(e) => setEditProperty({ ...editProperty, bathrooms: e.target.value })} />
+
+            <label className="block text-sm font-medium">Status</label>
+            <select className="w-full mb-4 p-2 border rounded"
+              value={editProperty.status}
+              onChange={(e) => setEditProperty({ ...editProperty, status: e.target.value })}>
+              <option value="notsold">Available</option>
+              <option value="sold">Sold</option>
+            </select>
+
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setEditProperty(null)} className="px-4 py-2 border rounded">Cancel</button>
+              <button onClick={handleUpdate} className="px-4 py-2 bg-slate-900 text-white rounded">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE MODAL */}
+      {deleteHouseId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-sm">
+            <h3 className="text-lg font-semibold mb-2">Delete Property</h3>
+            <p className="text-sm mb-6">
+              Delete house ID <b>{deleteHouseId}</b>?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeleteHouseId(null)} className="px-4 py-2 border rounded">
                 Cancel
               </button>
-              <button
-                className="px-4 py-2 text-sm rounded-md bg-slate-900 text-white"
-                onClick={handleUpdate}
-              >
-                Save
+              <button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded">
+                Delete
               </button>
             </div>
           </div>
