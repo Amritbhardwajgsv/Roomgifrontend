@@ -6,7 +6,7 @@ export default function ProtectedRoute() {
   const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/user/me", {
+    fetch(`${process.env.API_URL}/api/user/me`, {
       credentials: "include"
     })
       .then(res => {
@@ -20,7 +20,7 @@ export default function ProtectedRoute() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return null; // or loader
+  if (loading) return null;
 
   if (!authenticated) {
     return <Navigate to="/login" replace />;

@@ -18,45 +18,45 @@ export default function Login() {
       [e.target.id]: e.target.value,
     });
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await fetch(
-        "http://localhost:3000/api/user/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", 
-          body: JSON.stringify(formData),
-        }
-      );
-
-      const data = await res.json();
-       console.log("Response:", data);
-
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
+  try {
+    const res = await fetch(
+      `${process.env.API_URL}/api/user/login`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify(formData)
       }
+    );
 
+    const data = await res.json();
+    console.log("Response:", data);
 
-      
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-      navigate("/broker");
-          console.log("Login success — navigating now");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      throw new Error(data.message || "Login failed");
     }
-  };
+
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+    }
+
+    console.log("Login success — navigating now");
+    navigate("/broker");
+
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="p-3 max-w-lg mx-auto">
