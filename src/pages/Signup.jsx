@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 
+const BASE_URL = "https://roomgi-backend-0yz1.onrender.com";
+
 export default function Signup() {
   const navigate = useNavigate();
 
@@ -28,7 +30,7 @@ export default function Signup() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:3000/api/user/register", {
+      const res = await fetch(`${BASE_URL}/api/user/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -53,92 +55,81 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-200">
+    <div className="min-h-screen flex items-center justify-center bg-gray-300 px-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md">
 
-      <div className="w-full max-w-md bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-xl">
-
-        <h1 className="text-3xl font-bold text-center mb-2">
-          Create Account 🚀
+        <h1 className="text-2xl font-semibold text-center mb-1">
+          Create Account
         </h1>
-
-        <p className="text-center text-gray-500 mb-6">
-          Join Roomgi and find your perfect stay
+        <p className="text-center text-gray-500 mb-6 text-sm">
+          Sign up to continue to Roomgi
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          {/* USERNAME */}
           <input
             id="username"
             type="text"
             placeholder="Username"
             required
             onChange={handleChange}
-            className="w-full p-3 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none"
+            className="w-full p-3 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
-          {/* EMAIL */}
           <input
             id="emailId"
             type="email"
-            placeholder="Email address"
+            placeholder="Email"
             required
             onChange={handleChange}
-            className="w-full p-3 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none"
+            className="w-full p-3 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
-          {/* LOCATION */}
           <input
             id="location"
             type="text"
-            placeholder="City / Area (e.g. Noida Sector 62)"
+            placeholder="City / Area"
             required
             onChange={handleChange}
-            className="w-full p-3 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none"
+            className="w-full p-3 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
-          {/* AGE */}
           <input
             id="age"
             type="number"
             placeholder="Age"
             required
             onChange={handleChange}
-            className="w-full p-3 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none"
+            className="w-full p-3 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
-          {/* PASSWORD */}
           <input
             id="password"
             type="password"
             placeholder="Password"
             required
             onChange={handleChange}
-            className="w-full p-3 rounded-lg border focus:ring-2 focus:ring-blue-400 outline-none"
+            className="w-full p-3 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
 
-          {/* BUTTON */}
           <button
             disabled={loading}
-            className="w-full py-3 rounded-lg text-white font-semibold
-              bg-gradient-to-r from-blue-600 to-purple-600
-              hover:opacity-90 transition disabled:opacity-60"
+            className="w-full py-3 rounded-md bg-purple-200 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-60"
           >
             {loading ? "Creating account..." : "Sign Up"}
           </button>
-
         </form>
 
         {error && (
-          <p className="text-red-600 text-center mt-4">
+          <p className="text-red-600 text-center text-sm mt-4">
             {error}
           </p>
         )}
 
-        <p className="text-center text-sm mt-6">
+        <p className="text-center text-sm mt-6 text-gray-600">
           Already have an account?
           <Link to="/login">
-            <span className="text-blue-700 ml-1 font-medium">
+            <span className="text-indigo-600 ml-1 font-medium hover:underline">
               Login
             </span>
           </Link>
