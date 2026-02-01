@@ -20,13 +20,11 @@ export const deletebyid = (house_id) => {
 const BASE_URL = "https://roomgi-backend-0yz1.onrender.com";
 
 export const adddetails = async (payload) => {
-  const token = localStorage.getItem("token"); // JWT token
-
   const res = await fetch(`${BASE_URL}/api/property/`, {
     method: "POST",
+    credentials: "include", // ✅ THIS SENDS COOKIE
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+      "Content-Type": "application/json"
     },
     body: JSON.stringify(payload)
   });
@@ -34,7 +32,7 @@ export const adddetails = async (payload) => {
   const data = await res.json();
 
   if (!res.ok) {
-    throw data;
+    throw new Error(data.message || "Failed to add property");
   }
 
   return data;

@@ -47,19 +47,31 @@ function LocationPicker({ setFormData }) {
     async click(e) {
       const { lat, lng } = e.latlng;
 
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-      );
-      const data = await res.json();
-      const a = data.address || {};
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        );
 
-      setFormData(p => ({
-        ...p,
-        latitude: lat,
-        longitude: lng,
-        city: a.city || a.town || a.village || p.city,
-        state: a.state || p.state
-      }));
+        if (!res.ok) throw new Error("Reverse geocode failed");
+
+        const data = await res.json();
+        const a = data.address || {};
+
+        setFormData(p => ({
+          ...p,
+          latitude: lat,
+          longitude: lng,
+          city: a.city || a.town || a.village || p.city,
+          state: a.state || p.state
+        }));
+      } catch {
+        // even if reverse fails, still save lat/lng
+        setFormData(p => ({
+          ...p,
+          latitude: lat,
+          longitude: lng
+        }));
+      }
     }
   });
 
@@ -142,19 +154,73 @@ export default function AddProperty() {
 
             {/* FORM */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Input
+                label="Apartment Name"
+                name="Apartment_name"
+                value={formData.Apartment_name}
+                onChange={handleChange}
+              />
 
-              <Input label="Apartment Name" name="Apartment_name" value={formData.Apartment_name} onChange={handleChange} />
-              <Input label="Owner Name" name="Owner_name" required value={formData.Owner_name} onChange={handleChange} />
+              <Input
+                label="Owner Name"
+                name="Owner_name"
+                required
+                value={formData.Owner_name}
+                onChange={handleChange}
+              />
 
-              <Input label="City" name="city" required value={formData.city} onChange={handleChange} />
-              <Input label="State" name="state" required value={formData.state} onChange={handleChange} />
+              <Input
+                label="City"
+                name="city"
+                required
+                value={formData.city}
+                onChange={handleChange}
+              />
 
-              <Input label="Price (INR)" name="price_inr" type="number" required value={formData.price_inr} onChange={handleChange} />
-              <Input label="Size (sqft)" name="size_sqft" type="number" required value={formData.size_sqft} onChange={handleChange} />
-              <Input label="Bedrooms" name="bedrooms" type="number" required value={formData.bedrooms} onChange={handleChange} />
-              <Input label="Bathrooms" name="bathrooms" type="number" required value={formData.bathrooms} onChange={handleChange} />
+              <Input
+                label="State"
+                name="state"
+                required
+                value={formData.state}
+                onChange={handleChange}
+              />
 
-              {/* PROPERTY TYPE ENUM */}
+              <Input
+                label="Price (INR)"
+                name="price_inr"
+                type="number"
+                required
+                value={formData.price_inr}
+                onChange={handleChange}
+              />
+
+              <Input
+                label="Size (sqft)"
+                name="size_sqft"
+                type="number"
+                required
+                value={formData.size_sqft}
+                onChange={handleChange}
+              />
+
+              <Input
+                label="Bedrooms"
+                name="bedrooms"
+                type="number"
+                required
+                value={formData.bedrooms}
+                onChange={handleChange}
+              />
+
+              <Input
+                label="Bathrooms"
+                name="bathrooms"
+                type="number"
+                required
+                value={formData.bathrooms}
+                onChange={handleChange}
+              />
+
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium">Property Type *</label>
                 <select
@@ -172,13 +238,29 @@ export default function AddProperty() {
                 </select>
               </div>
 
-              <Input label="Year Built" name="year_built" type="number" value={formData.year_built} onChange={handleChange} />
-              <Input label="Parking" name="parking" value={formData.parking} onChange={handleChange} />
+              <Input
+                label="Year Built"
+                name="year_built"
+                type="number"
+                value={formData.year_built}
+                onChange={handleChange}
+              />
 
-              {/* 🔽 ENUM DROPDOWNS (REQUESTED CHANGE) */}
+              <Input
+                label="Parking"
+                name="parking"
+                value={formData.parking}
+                onChange={handleChange}
+              />
+
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium">Furnishing</label>
-                <select className="input" name="furnishing" value={formData.furnishing} onChange={handleChange}>
+                <select
+                  className="input"
+                  name="furnishing"
+                  value={formData.furnishing}
+                  onChange={handleChange}
+                >
                   <option>Unfurnished</option>
                   <option>Semi-Furnished</option>
                   <option>Fully Furnished</option>
@@ -187,7 +269,12 @@ export default function AddProperty() {
 
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium">Water Supply</label>
-                <select className="input" name="water_supply" value={formData.water_supply} onChange={handleChange}>
+                <select
+                  className="input"
+                  name="water_supply"
+                  value={formData.water_supply}
+                  onChange={handleChange}
+                >
                   <option>Corporation</option>
                   <option>Borewell</option>
                   <option>Both</option>
@@ -196,7 +283,12 @@ export default function AddProperty() {
 
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium">Internet</label>
-                <select className="input" name="internet" value={formData.internet} onChange={handleChange}>
+                <select
+                  className="input"
+                  name="internet"
+                  value={formData.internet}
+                  onChange={handleChange}
+                >
                   <option>None</option>
                   <option>Broadband</option>
                   <option>Fiber</option>

@@ -18,45 +18,41 @@ export default function Login() {
       [e.target.id]: e.target.value,
     });
   };
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
 
-  try {
-    const res = await fetch(
-      `${process.env.API_URL}/api/user/login`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        credentials: "include",
-        body: JSON.stringify(formData)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(
+        `${process.env.API_URL}/api/user/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // ✅ IMPORTANT
+          body: JSON.stringify(formData),
+        }
+      );
+
+      const data = await res.json();
+      console.log("Response:", data);
+
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
       }
-    );
 
-    const data = await res.json();
-    console.log("Response:", data);
+      console.log("Login success — navigating now");
+      navigate("/broker");
 
-    if (!res.ok) {
-      throw new Error(data.message || "Login failed");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-    }
-
-    console.log("Login success — navigating now");
-    navigate("/broker");
-
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
     <div className="p-3 max-w-lg mx-auto">
@@ -64,10 +60,7 @@ const handleSubmit = async (e) => {
         Login
       </h1>
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-3"
-      >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           placeholder="Username"
           className="border p-3 rounded-lg"
